@@ -78,4 +78,4 @@ g.region vect=$basins_onebasin
 v.gsflow.export reaches_input=$reaches segments_input=$segments gravres_input=$gravity_reservoirs hru_input=$HRUs pour_point_input=$pour_point reaches_output=$reaches segments_output=$segments gravres_output=$gravity_reservoirs hru_output=$HRUs pour_point_output=$pour_point --o
 
 g.region vect=$basin_vect_name res=$grid_res
-r.out.ascii in=$DEM out=$DEM.out
+r.out.ascii in=$DEM out=$DEM.out --o
