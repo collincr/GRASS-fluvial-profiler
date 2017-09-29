@@ -61,7 +61,7 @@ v.gsflow.reaches segment_input=$segments grid_input=$grid elevation=$DEM output=
 
 # GSFLOW HRU parameters
 r.slope.aspect elevation=$DEM slope=$slope aspect=$aspect format=percent zscale=0.01 --o
-v.gsflow.hruparams input=$basins_onebasin output=$HRUs slope=$slope aspect=$aspect --o
+v.gsflow.hruparams elevation=$DEM input=$basins_onebasin output=$HRUs slope=$slope aspect=$aspect --o
 
 # GSFLOW gravity reservoirs
 v.gsflow.gravres hru_input=$HRUs grid_input=$grid output=$gravity_reservoirs --o
@@ -78,3 +78,5 @@ g.region vect=$basins_onebasin
 # Export tables and discharge point
 v.gsflow.export reaches_input=$reaches segments_input=$segments gravres_input=$gravity_reservoirs hru_input=$HRUs pour_point_input=$pour_point reaches_output=$reaches segments_output=$segments gravres_output=$gravity_reservoirs hru_output=$HRUs pour_point_output=$pour_point --o
 
+g.region vect=$basin_vect_name res=$grid_res
+r.out.ascii in=$DEM out=$DEM.out
