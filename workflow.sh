@@ -23,6 +23,10 @@ pour_point=pp_tmp
 # Set region
 g.region -p rast=$DEM
 
+# need to install these two extensions
+g.extension r.cell.area
+g.extension r.stream.basins
+
 # Build flow accumulation with only fully on-map flow
 r.cell.area output=cellArea_meters2 units=m2 --o
 r.watershed elevation=$DEM flow=cellArea_meters2 accumulation=$accumulation -s --o
