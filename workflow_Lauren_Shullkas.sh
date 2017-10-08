@@ -1,6 +1,6 @@
-DEM=srtm_local_filled
-#DEM=ASTGTM2_S12W075_dem
-#DEM=DEM
+DEM_orig=DEM_orig
+DEM=DEM
+DEM_coarse=DEM_coarse # MODFLOW resolution
 accumulation=accumulation_tmp
 streams=streams_tmp
 streams_onebasin=${streams}_onebasin
@@ -8,10 +8,8 @@ basins=basins_tmp
 basins_onebasin=${basins}_onebasin
 segments=segments_tmp
 reaches=reaches_tmp
-#threshold=1000000 #m2 - drainage area
-threshold=100000 #m2 - drainage area
-#grid_res=150 #m2 - for MODFLOW
-grid_res=150 #m2 - for MODFLOW
+threshold=1000000 #m2 - drainage area
+grid_res=500 #150 #1000 #m2 - for MODFLOW
 grid=grid_tmp
 slope=slope_tmp
 aspect=aspect_tmp
@@ -23,15 +21,12 @@ pour_point=pp_tmp
 icalc=1 # how to compute hydraulic geometry
 
 # Set region
-g.region -p rast=$DEM
-
-# need to install these two extensions
-g.extension r.cell.area
-g.extension r.stream.basins
+g.region -p rast=$DEM_orig
 
 # Build flow accumulation with only fully on-map flow
 r.cell.area output=cellArea_meters2 units=m2 --o
-r.watershed elevation=$DEM flow=cellArea_meters2 accumulation=$accumulation -s --o
+r.hydrodem in=$DEM_orig out=$DEM -a --o
+r.watershed elevation=$DEM flow=cellArea_meters2 accumulation=$accumulation -m --o
 r.mapcalc "${accumulation}_pos = $accumulation * ($accumulation > 0)" --o
 r.null map=${accumulation}_pos setnull=0
 r.mapcalc "${DEM}_pos_accum = $DEM * (isnull(${accumulation}_pos) == 0)" --o
@@ -53,14 +48,14 @@ r.to.vect input=$basins output=$basins type=area -v --o
 v.stream.network map=$streams
 
 # Restrict to a single basin
-basin_outlet_cat=177 # 144 # 2485 # Lauren #2762 #144 # You must find and define this after building the stream network
+basin_outlet_cat=2638 #2840 #2485 # You must find and define this after building the stream network
 v.stream.inbasin input_streams=$streams input_basins=$basins output_streams=$streams_onebasin output_basin=$basins_onebasin cat=$basin_outlet_cat output_pour_point=$pour_point --o
 
 # GSFLOW segments: sections of stream that define subbasins
 v.gsflow.segments input=$streams_onebasin output=$segments icalc=$icalc --o
 
 # MODFLOW grid & basin mask (1s where basin exists and 0 where it doesn't)
-v.gsflow.grid basin=$basins_onebasin dx=$grid_res dy=$grid_res output=$grid mask_output=$basin_mask pour_point=$pour_point --o
+v.gsflow.grid basin=$basins_onebasin  pour_point=$pour_point raster_input=$DEM dx=$grid_res dy=$grid_res output=$grid mask_output=$basin_mask raster_output=$DEM_coarse --o
 
 # GSFLOW reaches: intersection of segments and grid
 v.gsflow.reaches segment_input=$segments grid_input=$grid elevation=$DEM output=$reaches --o
@@ -87,5 +82,3 @@ g.region rast=$DEM
 # Export tables and discharge point
 v.gsflow.export reaches_input=$reaches segments_input=$segments gravres_input=$gravity_reservoirs hru_input=$HRUs pour_point_input=$pour_point reaches_output=$reaches segments_output=$segments gravres_output=$gravity_reservoirs hru_output=$HRUs pour_point_output=$pour_point --o
 
-g.region vect=$basin_vect_name res=$grid_res
-r.out.ascii in=$DEM out=$DEM.out --o
